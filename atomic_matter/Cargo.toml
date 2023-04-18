@@ -1,0 +1,18 @@
+[package]
+name = "atomic_matter"
+edition.workspace = true
+version.workspace = true
+description.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde.workspace = true
+serde_yaml.workspace = true
+libc.workspace = true
+winapi.workspace = true
+glob.workspace = true
+log.workspace = true
+env_logger.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
