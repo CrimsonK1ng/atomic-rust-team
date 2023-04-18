@@ -1,7 +1,7 @@
 use crate::dependencies::Dependencies;
 use crate::executor::Executor;
 use crate::inputs::Inputs;
-use crate::Executors;
+use crate::{setup_args, setup_command_with_args, Executors};
 
 use anyhow::{anyhow, Result};
 use log::{debug, info};
@@ -102,18 +102,14 @@ impl AtomicTest {
             return Ok(());
         }
         let executor = Executors::convert(self.dependency_executor_name.as_str())?;
+        let evaled_inputs = setup_args(inputs);
 
         for dep in &mut self.dependencies {
-            let mut dep_get_cmd = dep.get_prereq_command.clone();
-            let mut dep_cmd = dep.prereq_command.clone();
-
             // borrow inputs to do this step
             // replace the values of the commands with input values
-            for (arg, key) in inputs {
-                let pattern_arg = format!("#{{{}}}", arg);
-                dep_get_cmd = dep_get_cmd.replace(pattern_arg.as_str(), key.as_str());
-                dep_cmd = dep_cmd.replace(pattern_arg.as_str(), key.as_str());
-            }
+            let dep_get_cmd =
+                setup_command_with_args(dep.get_prereq_command.clone(), &evaled_inputs); // dep_get_cmd.replace(pattern_arg.as_str(), key.as_str());
+            let dep_cmd = setup_command_with_args(dep.prereq_command.clone(), &evaled_inputs); // dep_cmd.replace(pattern_arg.as_str(), key.as_str());
 
             debug!("dep_get_cmd -> {} dep_cmd -> {}", dep_get_cmd, dep_cmd);
             dep.prereq_command = dep_cmd;
@@ -148,5 +144,17 @@ impl AtomicTest {
             "Operating System not included in Supported Platforms: {:?}",
             self.supported_platforms
         ));
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_atomic() {
+        match Executors::convert("bash") {
+            Ok(v) => assert_eq!(Executors::Bash, v),
+            Err(_) => panic!("invalid executor"),
+        };
     }
 }

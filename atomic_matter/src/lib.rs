@@ -3,6 +3,7 @@ pub mod dependencies;
 pub mod executor;
 pub mod inputs;
 use anyhow::{anyhow, Result};
+use std::collections::HashMap;
 use std::env::consts::OS;
 /// Returns if the current process is elevated within a Windows OS
 // https://doc.rust-lang.org/reference/conditional-compilation.html
@@ -75,6 +76,7 @@ pub fn is_elevated() -> bool {
 }
 
 /// Enumeration for given executors used to execute AtomicTest tests
+#[derive(Debug, PartialEq)]
 pub enum Executors {
     Powershell,
     CommandPrompt,
@@ -129,5 +131,68 @@ pub fn get_cmd_setup(executor: &str) -> (&str, &str) {
         }
     } else {
         panic!("bad executor specified")
+    }
+}
+
+pub fn setup_command_with_args<'a>(temp: String, inputs: &'a Vec<(String, String)>) -> String {
+    let mut full_command: String = temp.clone();
+    for (arg, key) in inputs {
+        full_command = full_command.replace(arg, key.as_str());
+    }
+    full_command
+}
+
+pub fn setup_args<'a>(inputs: &'a HashMap<String, String>) -> Vec<(String, String)> {
+    let mut filled_inputs: Vec<(String, String)> = Vec::new();
+    for (arg, val) in inputs {
+        let updatedarg = &format!("#{{{}}}", arg);
+        filled_inputs.push((updatedarg.to_string(), val.to_string()));
+    }
+    filled_inputs
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    #[test]
+    fn test_convert_executor() {
+        match Executors::convert("bash") {
+            Ok(v) => assert_eq!(Executors::Bash, v),
+            Err(_) => panic!("invalid executor"),
+        };
+    }
+
+    #[test]
+    fn test_cmd_setup_valid() {
+        let (cmd, flag) = get_cmd_setup("powershell");
+        if OS == "macos" || OS == "linux" {
+            assert_eq!(cmd, "pwsh");
+        } else {
+            assert_eq!(cmd, "powershell");
+        }
+        assert_eq!(flag, "-c");
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_cmd_setup_invalid() {
+        let (_, _) = get_cmd_setup("invalid");
+    }
+
+    #[test]
+    fn test_cmd_setup_args() {
+        let mut map: HashMap<String, String> = HashMap::new();
+        map.insert(String::from("test"), String::from("val"));
+        let vals = setup_args(&map);
+        for (name, _) in vals {
+            assert_eq!(String::from("#{test}"), name);
+        }
+    }
+
+    #[test]
+    fn test_cmd_setup() {
+        let vec = vec![(String::from("#{test}"), String::from("value"))];
+        let cmd = setup_command_with_args(String::from("this is the #{test}"), &vec);
+        assert_eq!("this is the value", cmd.as_str());
     }
 }

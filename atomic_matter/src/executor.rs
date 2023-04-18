@@ -1,4 +1,5 @@
 use crate::{get_cmd_setup, is_elevated};
+use crate::{setup_args, setup_command_with_args};
 use anyhow::{anyhow, Result};
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
@@ -39,12 +40,10 @@ impl Executor {
         }
         let (mut cmd, arg1) = self.get_executor();
 
+        let evaled_inputs = setup_args(args);
+
         debug!("executor gathered for command: {}", self.name);
-        let mut filled_command: String = String::clone(&self.command);
-        for (arg, key) in args {
-            let pattern_arg = format!("#{{{}}}", arg);
-            filled_command = filled_command.replace(pattern_arg.as_str(), key.as_str());
-        }
+        let filled_command = setup_command_with_args(self.command.clone(), &evaled_inputs);
         debug!("full command to be executed\n{}", filled_command);
 
         let output = match cmd.arg(arg1).arg(filled_command).output() {
@@ -75,20 +74,18 @@ impl Executor {
                 "command failed to exit correctly, refusing to execute cleanup"
             ));
         }
-        if self.cleanup_command == "" {
+        if self.cleanup_command.is_empty() {
             return Ok(());
         }
         if self.elevation_required && !is_elevated() {
             panic!("elevation required, please elevate")
         }
         let (mut cmd, arg1) = self.get_executor();
+        let evaled_inputs = setup_args(args);
 
         debug!("executor gathered for command: {}", self.name);
-        let mut filled_command: String = String::clone(&self.cleanup_command);
-        for (arg, key) in args {
-            let pattern_arg = format!("#{{{}}}", arg);
-            filled_command = filled_command.replace(pattern_arg.as_str(), key.as_str());
-        }
+        let mut filled_command =
+            setup_command_with_args(self.cleanup_command.clone(), &evaled_inputs);
 
         debug!("cleanup command to be ran\n{}", filled_command);
 
