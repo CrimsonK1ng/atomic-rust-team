@@ -75,6 +75,9 @@ impl Executor {
                 "command failed to exit correctly, refusing to execute cleanup"
             ));
         }
+        if self.cleanup_command == "" {
+            return Ok(());
+        }
         if self.elevation_required && !is_elevated() {
             panic!("elevation required, please elevate")
         }
