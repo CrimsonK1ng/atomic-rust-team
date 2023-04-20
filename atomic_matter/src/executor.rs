@@ -1,7 +1,7 @@
 use crate::{get_cmd_setup, is_elevated};
 use crate::{setup_args, setup_command_with_args};
 use anyhow::{anyhow, Result};
-use log::{debug, info};
+use log::debug;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::{self, Write};
@@ -69,7 +69,7 @@ impl Executor {
     }
 
     pub fn do_cleanup(&self, args: &HashMap<String, String>) -> Result<()> {
-        if self.success == false {
+        if !self.success {
             return Err(anyhow!(
                 "command failed to exit correctly, refusing to execute cleanup"
             ));
@@ -84,9 +84,7 @@ impl Executor {
         let evaled_inputs = setup_args(args);
 
         debug!("executor gathered for command: {}", self.name);
-        let mut filled_command =
-            setup_command_with_args(self.cleanup_command.clone(), &evaled_inputs);
-
+        let filled_command = setup_command_with_args(self.cleanup_command.clone(), &evaled_inputs);
         debug!("cleanup command to be ran\n{}", filled_command);
 
         let output = match cmd.arg(arg1).arg(filled_command).output() {

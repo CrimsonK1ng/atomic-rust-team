@@ -3,7 +3,7 @@ use clap::{arg, command, Arg, ArgMatches, Command};
 use env_logger::Env;
 use log::LevelFilter;
 use log::{debug, error, info, warn};
-use serde_yaml;
+
 use std::collections::HashMap;
 use std::env;
 fn main() {
@@ -59,7 +59,15 @@ fn main() {
         index_atomics.insert(atomic_name.clone(), sub_index);
         subatomics.push(
             Command::new(atomic_name)
-                .about(val.attack_technique.clone())
+                .alias(val.attack_technique.clone())
+                .about(format!(
+                    "Alias {} - Tests cases:\n{}",
+                    val.attack_technique.clone(),
+                    val.atomic_tests
+                        .iter()
+                        .map(|t| format!("- {}\n", t.name.clone()) as String)
+                        .collect::<String>(),
+                ))
                 .arg_required_else_help(true)
                 // .subcommand_required(true)
                 .subcommands(testcmds.iter()),
@@ -165,7 +173,6 @@ fn main() {
         Ok(_) => info!("success"),
         Err(err) => {
             error!("{:?}", err);
-            return;
         }
     }
 }
@@ -182,12 +189,8 @@ fn list_with_options(flag: ArgMatches, atomic_collection: &HashMap<String, Atom>
         for test in atom.atomic_tests.iter() {
             if test.supports_platform(&platform) {
                 println!(
-                    "{}\n\t{}\n\t{}\n\t{}\n\t{}",
-                    atom.attack_technique,
-                    atom.display_name,
-                    test.name,
-                    test.auto_generated_guid,
-                    test.description
+                    "Technique ID: [{:^11}]:    [{}]",
+                    atom.attack_technique, test.name
                 );
             }
         }

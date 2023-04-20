@@ -30,7 +30,7 @@ impl Atom {
 
         args.insert(String::from("test"), String::from("hello"));
         for test in self.atomic_tests.iter_mut() {
-            test.executor.execute(&mut args)?
+            test.executor.execute(&args)?
         }
 
         Ok(())
@@ -92,13 +92,13 @@ impl AtomicTest {
     /// 3. that all inputs are provided
     /// 4. that all dependencies execute successfully
     pub fn validate_dependencies(&mut self, inputs: &HashMap<String, String>) -> Result<()> {
-        let _ = self.check_os()?;
+        self.check_os()?;
         debug!(
             "dependency_executor_name: {}",
             self.dependency_executor_name
         );
         debug!("dependencies: {}", self.dependencies.len());
-        if self.dependencies.len() == 0 {
+        if self.dependencies.is_empty() {
             return Ok(());
         }
         let executor = Executors::convert(self.dependency_executor_name.as_str())?;
@@ -128,7 +128,7 @@ impl AtomicTest {
         if platform == "all" {
             return true;
         }
-        self.supported_platforms.contains(&platform)
+        self.supported_platforms.contains(platform)
     }
 
     /// return if supported_platforms contains the current OS
@@ -140,10 +140,10 @@ impl AtomicTest {
         {
             return Ok(());
         }
-        return Err(anyhow!(
+        Err(anyhow!(
             "Operating System not included in Supported Platforms: {:?}",
             self.supported_platforms
-        ));
+        ))
     }
 }
 

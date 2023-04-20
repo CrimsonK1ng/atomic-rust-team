@@ -134,15 +134,15 @@ pub fn get_cmd_setup(executor: &str) -> (&str, &str) {
     }
 }
 
-pub fn setup_command_with_args<'a>(temp: String, inputs: &'a Vec<(String, String)>) -> String {
-    let mut full_command: String = temp.clone();
+pub fn setup_command_with_args(temp: String, inputs: &Vec<(String, String)>) -> String {
+    let mut full_command: String = temp;
     for (arg, key) in inputs {
         full_command = full_command.replace(arg, key.as_str());
     }
     full_command
 }
 
-pub fn setup_args<'a>(inputs: &'a HashMap<String, String>) -> Vec<(String, String)> {
+pub fn setup_args(inputs: &HashMap<String, String>) -> Vec<(String, String)> {
     let mut filled_inputs: Vec<(String, String)> = Vec::new();
     for (arg, val) in inputs {
         let updatedarg = &format!("#{{{}}}", arg);

@@ -84,10 +84,10 @@ impl Dependencies {
 
     /// Returns if the given dependency is empty (no commands supplied)
     pub fn is_empty(&self) -> bool {
-        if self.prereq_command != "" {
+        if !self.prereq_command.is_empty() {
             return false;
         }
-        if self.get_prereq_command != "" {
+        if !self.get_prereq_command.is_empty() {
             return false;
         }
         true
